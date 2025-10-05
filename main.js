@@ -13,6 +13,7 @@ const statements = [
 
 let currentStatementIndex = 0;
 let awaitingResponse = true;
+let inGracePeriod = true; // new flag for 1s grace period
 
 // Image variants
 const images = {
@@ -28,7 +29,14 @@ function updateStatement(i) {
   titleEl.textContent = statement;
   stateEl.textContent = "(awaiting response)";
   awaitingResponse = true;
+  inGracePeriod = true;          // start grace period
   artEl.src = images.unseen;
+
+  // End grace period after 1 second
+  setTimeout(() => {
+    inGracePeriod = false;
+    console.log("⏳ Grace period over, votes now accepted");
+  }, 1000);
 
   if ("mediaSession" in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -42,7 +50,7 @@ function updateStatement(i) {
 }
 
 function setResponse(type) {
-  if (!awaitingResponse) return;
+  if (!awaitingResponse || inGracePeriod) return; // ignore during grace period
   awaitingResponse = false;
 
   let label, art;
