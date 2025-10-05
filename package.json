@@ -1,0 +1,17 @@
+{
+  "name": "polis-media-session-test-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "dev": "serve . -l 3000 & wait-on http://localhost:3000 && lt --port 3000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "localtunnel": "^2.0.2",
+    "serve": "^14.2.5",
+    "wait-on": "^9.0.1"
+  }
+}

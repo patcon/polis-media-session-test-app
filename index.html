@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Media Session — Civic Response Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; text-align: center; padding: 2em; }
+    img { width: 200px; height: 200px; border-radius: 10px; margin-top: 1em; object-fit: cover; }
+    #title { font-size: 1.4em; margin-top: 1em; }
+    #state { font-weight: bold; margin-top: 0.5em; }
+  </style>
+</head>
+<body>
+  <h1>Media Session — Statement Response Demo</h1>
+
+  <audio id="player" controls crossorigin="anonymous">
+    <!-- You can replace this with your own hosted file -->
+    <source src="https://upload.wikimedia.org/wikipedia/commons/4/4e/BWV_543-fugue.ogg" type="audio/ogg">
+  </audio>
+
+  <div id="meta">
+    <h2 id="title">Loading statement...</h2>
+    <p id="state">(awaiting response)</p>
+    <img id="art" src="https://picsum.photos/seed/unseen/512?blur=8" alt="artwork">
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
