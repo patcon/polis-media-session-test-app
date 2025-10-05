@@ -38,9 +38,10 @@ function updateMediaSessionCountdown(secondsLeft, label) {
   }
 }
 
+let currentResponseLabel = "(awaiting response)"; // track current response
+
 function startCountdown(duration) {
   currentCountdown = duration;
-  updateMediaSessionCountdown(currentCountdown, awaitingResponse ? "(awaiting response)" : stateEl.textContent);
 
   if (countdownInterval) clearInterval(countdownInterval);
 
@@ -50,19 +51,23 @@ function startCountdown(duration) {
       clearInterval(countdownInterval);
       return;
     }
-    updateMediaSessionCountdown(currentCountdown, awaitingResponse ? "(awaiting response)" : stateEl.textContent);
+
+    // ✅ Use currentResponseLabel, not awaitingResponse
+    updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
   }, 1000);
+
+  // Initial update
+  updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
 }
 
 function updateStatement(i) {
   const statement = statements[i];
   titleEl.textContent = statement;
   stateEl.textContent = "(awaiting response)";
-  awaitingResponse = true;
+  currentResponseLabel = "(awaiting response)";
   inGracePeriod = true;
   artEl.src = images.unseen;
 
-  // 1s grace period before votes accepted
   setTimeout(() => {
     inGracePeriod = false;
     console.log("⏳ Grace period over, votes now accepted");
@@ -74,8 +79,7 @@ function updateStatement(i) {
 }
 
 function setResponse(type) {
-  if (!awaitingResponse || inGracePeriod) return;
-  awaitingResponse = false;
+  if (inGracePeriod) return;
 
   let label, art;
   switch (type) {
@@ -93,13 +97,16 @@ function setResponse(type) {
       break;
   }
 
+  // ✅ Save current response
+  currentResponseLabel = label;
+
   stateEl.textContent = label;
   artEl.src = art;
 
-  console.log("Response:", type);
+  console.log("Response updated:", type);
 
-  // ✅ Use currentCountdown instead of resetting to 15
-  updateMediaSessionCountdown(currentCountdown, label);
+  // Update MediaSession with current countdown and latest response
+  updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
 }
 
 // --- Media Session action mapping ---
