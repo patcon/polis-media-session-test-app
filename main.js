@@ -46,14 +46,16 @@ function startCountdown(duration) {
   if (countdownInterval) clearInterval(countdownInterval);
 
   countdownInterval = setInterval(() => {
-    currentCountdown--;
-    if (currentCountdown < 0) {
-      clearInterval(countdownInterval);
-      return;
-    }
-
-    // ✅ Use currentResponseLabel, not awaitingResponse
+    // Update lock screen every second with current response
     updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
+
+    currentCountdown--;
+
+    if (currentCountdown < 0) {
+      // Move to next statement
+      currentStatementIndex = (currentStatementIndex + 1) % statements.length;
+      updateStatement(currentStatementIndex);
+    }
   }, 1000);
 
   // Initial update
@@ -115,14 +117,6 @@ if ("mediaSession" in navigator) {
   navigator.mediaSession.setActionHandler("previoustrack", () => setResponse("disagree"));
   navigator.mediaSession.setActionHandler("play", () => setResponse("pass"));
   navigator.mediaSession.setActionHandler("pause", () => setResponse("pass"));
-}
-
-// --- Cycle statements every STATEMENT_DURATION seconds ---
-function cycleStatements() {
-  setInterval(() => {
-    currentStatementIndex = (currentStatementIndex + 1) % statements.length;
-    updateStatement(currentStatementIndex);
-  }, STATEMENT_DURATION * 1000);
 }
 
 // --- Initialize ---
