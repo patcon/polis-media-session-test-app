@@ -12,10 +12,10 @@ const statements = [
 ];
 
 let currentStatementIndex = 0;
-let awaitingResponse = true;
 let inGracePeriod = true;
 let countdownInterval = null;
 let currentCountdown = 15; // track remaining seconds
+let currentResponseLabel = "(awaiting response)"; // track current response
 
 const STATEMENT_DURATION = 15; // seconds
 
@@ -38,30 +38,6 @@ function updateMediaSessionCountdown(secondsLeft, label) {
   }
 }
 
-let currentResponseLabel = "(awaiting response)"; // track current response
-
-function startCountdown(duration) {
-  currentCountdown = duration;
-
-  if (countdownInterval) clearInterval(countdownInterval);
-
-  countdownInterval = setInterval(() => {
-    // Update lock screen every second with current response
-    updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
-
-    currentCountdown--;
-
-    if (currentCountdown < 0) {
-      // Move to next statement
-      currentStatementIndex = (currentStatementIndex + 1) % statements.length;
-      updateStatement(currentStatementIndex);
-    }
-  }, 1000);
-
-  // Initial update
-  updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
-}
-
 function updateStatement(i) {
   const statement = statements[i];
   titleEl.textContent = statement;
@@ -70,18 +46,20 @@ function updateStatement(i) {
   inGracePeriod = true;
   artEl.src = images.unseen;
 
+  // 1s grace period before votes are accepted
   setTimeout(() => {
     inGracePeriod = false;
     console.log("⏳ Grace period over, votes now accepted");
   }, 1000);
 
-  startCountdown(STATEMENT_DURATION);
+  // Reset countdown
+  currentCountdown = STATEMENT_DURATION;
 
   console.log("🗣️ New statement:", statement);
 }
 
 function setResponse(type) {
-  if (inGracePeriod) return;
+  if (inGracePeriod) return; // block votes in grace period
 
   let label, art;
   switch (type) {
@@ -99,7 +77,7 @@ function setResponse(type) {
       break;
   }
 
-  // ✅ Save current response
+  // Save current response
   currentResponseLabel = label;
 
   stateEl.textContent = label;
@@ -108,6 +86,24 @@ function setResponse(type) {
   console.log("Response updated:", type);
 
   // Update MediaSession with current countdown and latest response
+  updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
+}
+
+function startCountdown() {
+  if (countdownInterval) clearInterval(countdownInterval);
+
+  countdownInterval = setInterval(() => {
+    updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
+    currentCountdown--;
+
+    if (currentCountdown < 0) {
+      // Move to next statement
+      currentStatementIndex = (currentStatementIndex + 1) % statements.length;
+      updateStatement(currentStatementIndex);
+    }
+  }, 1000);
+
+  // Initial update
   updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
 }
 
@@ -122,5 +118,5 @@ if ("mediaSession" in navigator) {
 // --- Initialize ---
 audio.addEventListener("play", () => {
   updateStatement(currentStatementIndex);
-  cycleStatements();
+  startCountdown();
 });
