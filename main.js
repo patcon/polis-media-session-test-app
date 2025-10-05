@@ -13,7 +13,11 @@ const statements = [
 
 let currentStatementIndex = 0;
 let awaitingResponse = true;
-let inGracePeriod = true; // new flag for 1s grace period
+let inGracePeriod = true;
+let countdownInterval = null;
+let currentCountdown = 15; // track remaining seconds
+
+const STATEMENT_DURATION = 15; // seconds
 
 // Image variants
 const images = {
@@ -24,33 +28,53 @@ const images = {
 };
 
 // --- Helpers ---
+function updateMediaSessionCountdown(secondsLeft, label) {
+  if ("mediaSession" in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: statements[currentStatementIndex],
+      artist: `[0:${secondsLeft.toString().padStart(2, "0")}] ${label}`,
+      artwork: [{ src: artEl.src, sizes: "512x512", type: "image/jpeg" }]
+    });
+  }
+}
+
+function startCountdown(duration) {
+  currentCountdown = duration;
+  updateMediaSessionCountdown(currentCountdown, awaitingResponse ? "(awaiting response)" : stateEl.textContent);
+
+  if (countdownInterval) clearInterval(countdownInterval);
+
+  countdownInterval = setInterval(() => {
+    currentCountdown--;
+    if (currentCountdown < 0) {
+      clearInterval(countdownInterval);
+      return;
+    }
+    updateMediaSessionCountdown(currentCountdown, awaitingResponse ? "(awaiting response)" : stateEl.textContent);
+  }, 1000);
+}
+
 function updateStatement(i) {
   const statement = statements[i];
   titleEl.textContent = statement;
   stateEl.textContent = "(awaiting response)";
   awaitingResponse = true;
-  inGracePeriod = true;          // start grace period
+  inGracePeriod = true;
   artEl.src = images.unseen;
 
-  // End grace period after 1 second
+  // 1s grace period before votes accepted
   setTimeout(() => {
     inGracePeriod = false;
     console.log("⏳ Grace period over, votes now accepted");
   }, 1000);
 
-  if ("mediaSession" in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: statement,
-      artist: "Civic Discussion",
-      artwork: [{ src: images.unseen, sizes: "512x512", type: "image/jpeg" }]
-    });
-  }
+  startCountdown(STATEMENT_DURATION);
 
   console.log("🗣️ New statement:", statement);
 }
 
 function setResponse(type) {
-  if (!awaitingResponse || inGracePeriod) return; // ignore during grace period
+  if (!awaitingResponse || inGracePeriod) return;
   awaitingResponse = false;
 
   let label, art;
@@ -74,13 +98,8 @@ function setResponse(type) {
 
   console.log("Response:", type);
 
-  if ("mediaSession" in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: statements[currentStatementIndex],
-      artist: label,
-      artwork: [{ src: art, sizes: "512x512", type: "image/jpeg" }]
-    });
-  }
+  // ✅ Use currentCountdown instead of resetting to 15
+  updateMediaSessionCountdown(currentCountdown, label);
 }
 
 // --- Media Session action mapping ---
@@ -91,12 +110,12 @@ if ("mediaSession" in navigator) {
   navigator.mediaSession.setActionHandler("pause", () => setResponse("pass"));
 }
 
-// --- Cycle statements every 15s ---
+// --- Cycle statements every STATEMENT_DURATION seconds ---
 function cycleStatements() {
   setInterval(() => {
     currentStatementIndex = (currentStatementIndex + 1) % statements.length;
     updateStatement(currentStatementIndex);
-  }, 15000);
+  }, STATEMENT_DURATION * 1000);
 }
 
 // --- Initialize ---
