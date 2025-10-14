@@ -64,7 +64,7 @@ function setResponse(type) {
   let label, art;
   switch (type) {
     case "agree":
-      label = "✅ You agreed";
+      label = "✔️ You agreed";
       art = images.agree;
       break;
     case "disagree":
@@ -72,7 +72,7 @@ function setResponse(type) {
       art = images.disagree;
       break;
     case "pass":
-      label = "⏸️ You passed";
+      label = "🔹 You passed";
       art = images.pass;
       break;
   }
