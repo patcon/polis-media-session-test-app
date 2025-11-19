@@ -5,83 +5,261 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Media Session — Civic Response Demo</title>
   <style>
+    :root {
+      --primary-color: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary-color: #64748b;
+      --success-color: #059669;
+      --danger-color: #dc2626;
+      --warning-color: #d97706;
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-surface: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: system-ui, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--background);
+      color: var(--text-primary);
       text-align: center;
-      padding: 1em;
-      max-width: 100%;
-      margin: 0 auto;
+      padding: 2rem 1rem;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: var(--gradient-surface);
+      border-radius: 24px;
+      padding: 2.5rem;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--gradient-primary);
     }
 
     h1 {
-      font-size: 1.5em;
-      margin: 0.5em 0;
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 2rem 0;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.025em;
     }
 
     #player {
       width: 100%;
       max-width: 500px;
       height: 60px;
-      margin: 1em 0;
+      margin: 2rem 0;
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+    }
+
+    #player:focus {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+
+    #meta {
+      margin-top: 2rem;
     }
 
     img {
-      width: min(200px, 80vw);
-      height: min(200px, 80vw);
-      border-radius: 10px;
-      margin-top: 1em;
+      width: min(240px, 80vw);
+      height: min(240px, 80vw);
+      border-radius: 20px;
+      margin: 1.5rem 0;
       object-fit: cover;
+      box-shadow: var(--shadow-lg);
+      border: 3px solid var(--surface);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    img:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     }
 
     #title {
-      font-size: 1.2em;
-      margin: 1em 0.5em 0.5em 0.5em;
-      line-height: 1.3;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 1.5rem 0 1rem 0;
+      line-height: 1.4;
+      color: var(--text-primary);
+      padding: 1.5rem;
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      position: relative;
+    }
+
+    #title::before {
+      content: '"';
+      position: absolute;
+      top: 0.5rem;
+      left: 1rem;
+      font-size: 2rem;
+      color: var(--primary-color);
+      opacity: 0.3;
+    }
+
+    #title::after {
+      content: '"';
+      position: absolute;
+      bottom: 0.5rem;
+      right: 1rem;
+      font-size: 2rem;
+      color: var(--primary-color);
+      opacity: 0.3;
     }
 
     #state {
-      font-weight: bold;
-      margin: 0.5em;
-      font-size: 0.9em;
+      font-weight: 600;
+      margin: 1rem 0;
+      font-size: 1.1rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
+      display: inline-block;
+      min-width: 200px;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+      color: var(--text-secondary);
+      border-color: var(--border-color);
+    }
+
+    #state.agreed {
+      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+      color: var(--success-color);
+      border-color: var(--success-color);
+    }
+
+    #state.disagreed {
+      background: linear-gradient(135deg, #fef2f2, #fecaca);
+      color: var(--danger-color);
+      border-color: var(--danger-color);
+    }
+
+    #state.passed {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      color: var(--warning-color);
+      border-color: var(--warning-color);
+    }
+
+    /* Animation for state changes */
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    #state.updated {
+      animation: pulse 0.6s ease-in-out;
     }
 
     /* Mobile-specific adjustments */
     @media (max-width: 480px) {
       body {
-        padding: 0.5em;
+        padding: 1rem 0.5rem;
+      }
+
+      .container {
+        padding: 1.5rem;
+        border-radius: 16px;
       }
 
       h1 {
-        font-size: 1.3em;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
       }
 
       #player {
         height: 50px;
+        margin: 1.5rem 0;
       }
 
       #title {
-        font-size: 1.1em;
+        font-size: 1.2rem;
+        padding: 1rem;
+        margin: 1rem 0;
       }
 
       img {
-        width: min(150px, 70vw);
-        height: min(150px, 70vw);
+        width: min(180px, 70vw);
+        height: min(180px, 70vw);
+        border-radius: 16px;
       }
+
+      #state {
+        font-size: 1rem;
+        padding: 0.6rem 1.2rem;
+        min-width: 160px;
+      }
+    }
+
+    /* Accessibility improvements */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Focus styles for better accessibility */
+    button:focus,
+    audio:focus {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
     }
   </style>
 </head>
 <body>
-  <h1>Media Session — Statement Response Demo</h1>
+  <div class="container">
+    <h1>Media Session — Statement Response Demo</h1>
 
-  <audio id="player" controls crossorigin="anonymous">
-    <!-- You can replace this with your own hosted file -->
-    <source src="https://upload.wikimedia.org/wikipedia/commons/4/4e/BWV_543-fugue.ogg" type="audio/ogg">
-  </audio>
+    <audio id="player" controls crossorigin="anonymous">
+      <!-- You can replace this with your own hosted file -->
+      <source src="https://upload.wikimedia.org/wikipedia/commons/4/4e/BWV_543-fugue.ogg" type="audio/ogg">
+    </audio>
 
-  <div id="meta">
-    <h2 id="title">Loading statement...</h2>
-    <p id="state">(awaiting response)</p>
-    <img id="art" src="https://picsum.photos/seed/unseen/512?blur=8" alt="artwork">
+    <div id="meta">
+      <div id="title">Loading statement...</div>
+      <div id="state">(awaiting response)</div>
+      <img id="art" src="https://picsum.photos/seed/unseen/512?blur=8" alt="artwork">
+    </div>
   </div>
 
   <script src="main.js"></script>

@@ -46,6 +46,9 @@ function updateStatement(i) {
   inGracePeriod = true;
   artEl.src = images.unseen;
 
+  // Reset state styling to default
+  stateEl.className = '';
+
   // 1s grace period before votes are accepted
   setTimeout(() => {
     inGracePeriod = false;
@@ -80,8 +83,16 @@ function setResponse(type) {
   // Save current response
   currentResponseLabel = label;
 
+  // Reset classes and add new ones
+  stateEl.className = '';
+  stateEl.classList.add('updated', type);
   stateEl.textContent = label;
   artEl.src = art;
+
+  // Remove animation class after animation completes
+  setTimeout(() => {
+    stateEl.classList.remove('updated');
+  }, 600);
 
   console.log("Response updated:", type);
 
