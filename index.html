@@ -238,11 +238,124 @@
       }
     }
 
+    /* Instructions panel */
+    .instructions {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--gradient-surface);
+      border-top: 1px solid var(--border-color);
+      box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      transform: translateY(100%);
+    }
+
+    .instructions.expanded {
+      transform: translateY(0);
+    }
+
+    .instructions-toggle {
+      position: absolute;
+      top: -50px;
+      right: 1rem;
+      background: var(--gradient-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px 12px 0 0;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .instructions-toggle:hover {
+      background: var(--surface);
+      color: var(--text-primary);
+      transform: translateY(-2px);
+    }
+
+    .instructions-content {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    .instructions h3 {
+      margin: 0 0 0.75rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .button-guide {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .button-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--surface);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .button-emoji {
+      font-size: 1.2rem;
+    }
+
+    .agree { border-color: var(--success-color); }
+    .disagree { border-color: var(--danger-color); }
+    .pass { border-color: var(--warning-color); }
+
     /* Focus styles for better accessibility */
     button:focus,
     audio:focus {
       outline: 2px solid var(--primary-color);
       outline-offset: 2px;
+    }
+
+    /* Adjust body padding to account for fixed instructions */
+    body {
+      padding-bottom: 120px;
+    }
+
+    @media (max-width: 480px) {
+      .instructions {
+        padding: 0.75rem;
+      }
+
+      .button-guide {
+        gap: 0.75rem;
+      }
+
+      .button-item {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+      }
+
+      .button-emoji {
+        font-size: 1rem;
+      }
+
+      body {
+        padding-bottom: 100px;
+      }
     }
   </style>
 </head>
@@ -262,6 +375,44 @@
     </div>
   </div>
 
+  <div class="instructions" id="instructions">
+    <div class="instructions-toggle" id="instructionsToggle">
+      ❓ Help
+    </div>
+    <div class="instructions-content">
+      <h3>Use your device's media buttons to respond:</h3>
+      <div class="button-guide">
+        <div class="button-item agree">
+          <span class="button-emoji">⏭️</span>
+          <span>Next Track = ✅ Agree</span>
+        </div>
+        <div class="button-item disagree">
+          <span class="button-emoji">⏮️</span>
+          <span>Previous Track = ❌ Disagree</span>
+        </div>
+        <div class="button-item pass">
+          <span class="button-emoji">⏯️</span>
+          <span>Play/Pause = 🔹 Pass</span>
+        </div>
+      </div>
+      <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-secondary); font-style: italic;">
+        💡 <strong>Pro tip:</strong> Lock your phone and test from the lock screen for the full experience!
+      </p>
+    </div>
+  </div>
+
   <script src="main.js"></script>
+  <script>
+    // Instructions panel toggle functionality
+    const instructionsPanel = document.getElementById('instructions');
+    const instructionsToggle = document.getElementById('instructionsToggle');
+    
+    instructionsToggle.addEventListener('click', () => {
+      instructionsPanel.classList.toggle('expanded');
+      instructionsToggle.innerHTML = instructionsPanel.classList.contains('expanded')
+        ? '🔽 Controls'
+        : '❓ Help';
+    });
+  </script>
 </body>
 </html>
