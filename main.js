@@ -22,9 +22,9 @@ const STATEMENT_DURATION = 15; // seconds
 // Image variants
 const images = {
   unseen: "https://picsum.photos/seed/unseen/512?blur=8",
-  agree: "https://picsum.photos/seed/agree/512",
-  disagree: "https://picsum.photos/seed/disagree/512?grayscale",
-  pass: "https://picsum.photos/seed/pass/512?grayscale&blur=4"
+  agree: "assets/i-agree.png",
+  disagree: "assets/i-disagree.png",
+  pass: "assets/i-pass.jpeg"
 };
 
 // --- Helpers ---
