@@ -22,6 +22,9 @@ let progressUpdateFrameId = null;
 // Track responses for each statement by statementId
 let statementResponses = {};
 
+// Media override checkbox state
+let mediaOverrideEnabled = true; // Default to enabled
+
 // Load statements from JSON file
 async function loadStatements() {
   try {
@@ -300,16 +303,42 @@ function startCountdown() {
 }
 
 // --- Media Session action mapping ---
-if ("mediaSession" in navigator) {
-  navigator.mediaSession.setActionHandler("nexttrack", () => setResponse("agree"));
-  navigator.mediaSession.setActionHandler("previoustrack", () => setResponse("disagree"));
-  navigator.mediaSession.setActionHandler("play", () => setResponse("pass"));
-  navigator.mediaSession.setActionHandler("pause", () => setResponse("pass"));
+function updateMediaSessionHandlers() {
+  if ("mediaSession" in navigator) {
+    if (mediaOverrideEnabled) {
+      // Set vote handlers
+      navigator.mediaSession.setActionHandler("nexttrack", () => setResponse("agree"));
+      navigator.mediaSession.setActionHandler("previoustrack", () => setResponse("disagree"));
+      navigator.mediaSession.setActionHandler("play", () => setResponse("pass"));
+      navigator.mediaSession.setActionHandler("pause", () => setResponse("pass"));
+      console.log("🎛️ Media session handlers set to vote actions");
+    } else {
+      // Remove vote handlers to restore default behavior
+      navigator.mediaSession.setActionHandler("nexttrack", null);
+      navigator.mediaSession.setActionHandler("previoustrack", null);
+      navigator.mediaSession.setActionHandler("play", null);
+      navigator.mediaSession.setActionHandler("pause", null);
+      console.log("🎛️ Media session handlers cleared for default behavior");
+    }
+  }
 }
+
+// Initialize media session handlers
+updateMediaSessionHandlers();
 
 // --- Initialize ---
 async function initialize() {
   await loadStatements();
+
+  // Setup media override checkbox
+  const mediaOverrideCheckbox = document.getElementById('mediaOverrideCheckbox');
+  if (mediaOverrideCheckbox) {
+    mediaOverrideCheckbox.addEventListener('change', (e) => {
+      mediaOverrideEnabled = e.target.checked;
+      updateMediaSessionHandlers(); // Update handlers when checkbox changes
+      console.log(`🎛️ Media override ${mediaOverrideEnabled ? 'enabled' : 'disabled'}`);
+    });
+  }
 
   audio.addEventListener("play", () => {
     updateStatementFromSeekTime(); // Set statement based on current time

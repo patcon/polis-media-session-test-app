@@ -433,6 +433,81 @@
         padding-bottom: 100px;
       }
     }
+
+    /* Media override checkbox styling */
+    .media-override-container {
+      margin: 1rem 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .media-override-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.5rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .media-override-label:hover {
+      background: var(--background);
+      color: var(--text-primary);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .media-override-label input[type="checkbox"] {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--surface);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .media-override-label input[type="checkbox"]:checked {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .media-override-label input[type="checkbox"]:checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .media-override-label input[type="checkbox"]:focus {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 480px) {
+      .media-override-label {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+      }
+
+      .media-override-label input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -445,6 +520,14 @@
     </audio>
 
     <div id="debug-time">⏱️ 0:00 / 0:00</div>
+
+    <div class="media-override-container">
+      <label class="media-override-label">
+        <input type="checkbox" id="mediaOverrideCheckbox" checked>
+        <span class="checkmark"></span>
+        Override media control buttons with vote actions
+      </label>
+    </div>
 
     <div style="font-size: 0.8rem; color: var(--text-secondary); margin: 0.5rem 0; font-style: italic;">
       Source: <a href="https://www.youtube.com/watch?v=nfdUn9H4gjA" target="_blank" rel="noopener" style="color: var(--primary-color); text-decoration: none;">Zohran Mamdani victory speech: FULL (YouTube)</a>
