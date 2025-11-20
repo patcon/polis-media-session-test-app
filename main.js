@@ -14,11 +14,10 @@ let currentStatementIndex = 0;
 let currentStatement = null;
 let inGracePeriod = true;
 let countdownInterval = null;
-let currentCountdown = 8; // track remaining seconds
+let currentCountdown = 0; // track remaining seconds
 let currentResponseLabel = "(awaiting response)"; // track current response
 let progressUpdateFrameId = null;
 
-const STATEMENT_DURATION = 8; // seconds
 
 // Track responses for each statement by statementId
 let statementResponses = {};
@@ -90,52 +89,41 @@ function updateMediaSessionCountdown(secondsLeft, label) {
 
 function updateProgressBar() {
   if (!audio.duration || statements.length === 0) {
-    progressBarEl.style.width = '100%';
+    progressBarEl.style.width = '0%';
     return;
   }
 
   const currentTime = audio.currentTime;
 
-  // Find the next statement after the current time
+  // Find the next statement after current time
   const nextStatement = statements.find(s => s.timecode > currentTime);
 
-  if (!nextStatement) {
-    // No next statement - if we have a current statement, show progress until end of its window
-    if (currentStatement) {
-      const statementEndTime = currentStatement.timecode + STATEMENT_DURATION;
-      const timeRemaining = Math.max(0, statementEndTime - currentTime);
-      const progress = Math.max(0, Math.min(1, timeRemaining / STATEMENT_DURATION));
-      progressBarEl.style.width = `${progress * 100}%`;
-    } else {
-      progressBarEl.style.width = '0%';
-    }
-    return;
-  }
-
-  // Calculate progress until next statement
-  const timeUntilNext = nextStatement.timecode - currentTime;
-
-  // If we're before the first statement
-  if (!currentStatement && nextStatement === statements[0]) {
-    const totalTimeUntilFirst = nextStatement.timecode;
-    const progress = Math.max(0, Math.min(1, timeUntilNext / totalTimeUntilFirst));
+  // If we have a current statement, show countdown until next statement
+  if (currentStatement && nextStatement) {
+    const totalDuration = nextStatement.timecode - currentStatement.timecode;
+    const timeRemaining = Math.max(0, nextStatement.timecode - currentTime);
+    const progress = Math.max(0, Math.min(1, timeRemaining / totalDuration));
     progressBarEl.style.width = `${progress * 100}%`;
     return;
   }
 
-  // If we have a current statement, calculate based on time between statements
-  if (currentStatement) {
-    const totalTimeForStatement = nextStatement.timecode - currentStatement.timecode;
-    if (totalTimeForStatement <= 0) {
-      progressBarEl.style.width = '0%';
-      return;
-    }
-    const progress = Math.max(0, Math.min(1, timeUntilNext / totalTimeForStatement));
-    progressBarEl.style.width = `${progress * 100}%`;
-  } else {
-    // Fallback case
-    progressBarEl.style.width = '100%';
+  // If we have a current statement but no next statement, hide progress bar
+  if (currentStatement && !nextStatement) {
+    progressBarEl.style.width = '0%';
+    return;
   }
+
+  // If we're before any statement, show countdown until the first statement
+  const firstStatement = statements[0];
+  if (firstStatement && currentTime < firstStatement.timecode) {
+    const timeUntilFirst = firstStatement.timecode - currentTime;
+    const progress = Math.max(0, Math.min(1, timeUntilFirst / firstStatement.timecode));
+    progressBarEl.style.width = `${progress * 100}%`;
+    return;
+  }
+
+  // Fallback case - no current statement and past all statements
+  progressBarEl.style.width = '0%';
 }
 
 function animateProgressUpdate() {
@@ -186,10 +174,11 @@ function updateStatement(statement) {
     console.log("⏳ Grace period over, votes now accepted");
   }, 1000);
 
-  // Reset countdown
-  currentCountdown = STATEMENT_DURATION;
+  // Reset countdown - calculate based on time to next statement
+  const nextStatement = statements.find(s => s.timecode > audio.currentTime);
+  currentCountdown = nextStatement ? Math.ceil(nextStatement.timecode - audio.currentTime) : 0;
 
-  // Update progress bar for new statement
+  // Update progress bar for countdown (let updateProgressBar handle all calculations)
   updateProgressBar();
 
   console.log("🗣️ New statement:", statement.text, `(ID: ${statement.statementId})`);
@@ -273,7 +262,7 @@ function updateStatementFromSeekTime() {
 
     // Calculate countdown based on time until next statement or end of current statement window
     const nextStatement = statements.find(s => s.timecode > audio.currentTime);
-    const endTime = nextStatement ? nextStatement.timecode : activeStatement.timecode + STATEMENT_DURATION;
+    const endTime = nextStatement ? nextStatement.timecode : audio.duration;
     currentCountdown = Math.ceil(endTime - audio.currentTime);
 
     console.log(`🎯 Seek detected: Statement ${activeStatement.statementId}, ${currentCountdown}s remaining`);
@@ -299,7 +288,7 @@ function startCountdown() {
       const activeStatement = getActiveStatementFromTime(audio.currentTime);
       if (activeStatement) {
         const nextStatement = statements.find(s => s.timecode > audio.currentTime);
-        const endTime = nextStatement ? nextStatement.timecode : activeStatement.timecode + STATEMENT_DURATION;
+        const endTime = nextStatement ? nextStatement.timecode : audio.duration;
         currentCountdown = Math.ceil(endTime - audio.currentTime);
       }
     }
