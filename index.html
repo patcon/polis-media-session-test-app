@@ -417,11 +417,15 @@
     <h1>Media Session — Statement Response Demo</h1>
 
     <audio id="player" controls crossorigin="anonymous">
-      <!-- You can replace this with your own hosted file -->
-      <source src="https://upload.wikimedia.org/wikipedia/commons/4/4e/BWV_543-fugue.ogg" type="audio/ogg">
+      <!-- Using the Zohran Mamdani speech from assets -->
+      <source src="assets/zohran-mamdani-speech-clipped.mp3" type="audio/mpeg">
     </audio>
 
     <div id="debug-time">⏱️ 0:00 / 0:00</div>
+    
+    <div style="font-size: 0.8rem; color: var(--text-secondary); margin: 0.5rem 0; font-style: italic;">
+      Source: <a href="https://www.youtube.com/watch?v=nfdUn9H4gjA" target="_blank" rel="noopener" style="color: var(--primary-color); text-decoration: none;">Zohran Mamdani victory speech: FULL (YouTube)</a>
+    </div>
 
     <div id="meta">
       <div id="title">Statements will load on play</div>
