@@ -1,22 +1,27 @@
 [
   {
     "statementId": 1,
-    "timecode": 0.0,
-    "text": "The city should close downtown streets to cars on weekends."
+    "timecode": 3.0,
+    "text": "I am so excited for this guy."
   },
   {
     "statementId": 2,
-    "timecode": 15.0,
-    "text": "Public funding should prioritize local businesses over big corporations."
+    "timecode": 10.0,
+    "text": "I knew who Eugene Debs was before this."
   },
   {
     "statementId": 3,
-    "timecode": 30.0,
-    "text": "All public meetings should be recorded and archived online."
+    "timecode": 20.0,
+    "text": "I feel pissed off at the wealthy."
   },
   {
     "statementId": 4,
+    "timecode": 30.0,
+    "text": "Some other statement...."
+  },
+  {
+    "statementId": 5,
     "timecode": 45.0,
-    "text": "We should allow citizens to vote directly on annual budget priorities."
+    "text": "Yet another statement..."
   }
 ]

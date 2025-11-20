@@ -3,6 +3,7 @@ const titleEl = document.getElementById("title");
 const stateEl = document.getElementById("state");
 const artEl = document.getElementById("art");
 const debugTimeEl = document.getElementById("debug-time");
+const progressBarEl = document.getElementById("progressBar");
 
 // Animation frame for smooth time updates
 let timeUpdateFrameId = null;
@@ -15,6 +16,7 @@ let inGracePeriod = true;
 let countdownInterval = null;
 let currentCountdown = 8; // track remaining seconds
 let currentResponseLabel = "(awaiting response)"; // track current response
+let progressUpdateFrameId = null;
 
 const STATEMENT_DURATION = 8; // seconds
 
@@ -86,6 +88,75 @@ function updateMediaSessionCountdown(secondsLeft, label) {
   }
 }
 
+function updateProgressBar() {
+  if (!audio.duration || statements.length === 0) {
+    progressBarEl.style.width = '100%';
+    return;
+  }
+
+  const currentTime = audio.currentTime;
+
+  // Find the next statement after the current time
+  const nextStatement = statements.find(s => s.timecode > currentTime);
+
+  if (!nextStatement) {
+    // No next statement - if we have a current statement, show progress until end of its window
+    if (currentStatement) {
+      const statementEndTime = currentStatement.timecode + STATEMENT_DURATION;
+      const timeRemaining = Math.max(0, statementEndTime - currentTime);
+      const progress = Math.max(0, Math.min(1, timeRemaining / STATEMENT_DURATION));
+      progressBarEl.style.width = `${progress * 100}%`;
+    } else {
+      progressBarEl.style.width = '0%';
+    }
+    return;
+  }
+
+  // Calculate progress until next statement
+  const timeUntilNext = nextStatement.timecode - currentTime;
+
+  // If we're before the first statement
+  if (!currentStatement && nextStatement === statements[0]) {
+    const totalTimeUntilFirst = nextStatement.timecode;
+    const progress = Math.max(0, Math.min(1, timeUntilNext / totalTimeUntilFirst));
+    progressBarEl.style.width = `${progress * 100}%`;
+    return;
+  }
+
+  // If we have a current statement, calculate based on time between statements
+  if (currentStatement) {
+    const totalTimeForStatement = nextStatement.timecode - currentStatement.timecode;
+    if (totalTimeForStatement <= 0) {
+      progressBarEl.style.width = '0%';
+      return;
+    }
+    const progress = Math.max(0, Math.min(1, timeUntilNext / totalTimeForStatement));
+    progressBarEl.style.width = `${progress * 100}%`;
+  } else {
+    // Fallback case
+    progressBarEl.style.width = '100%';
+  }
+}
+
+function animateProgressUpdate() {
+  updateProgressBar();
+  progressUpdateFrameId = requestAnimationFrame(animateProgressUpdate);
+}
+
+function startProgressUpdates() {
+  if (progressUpdateFrameId) {
+    cancelAnimationFrame(progressUpdateFrameId);
+  }
+  animateProgressUpdate();
+}
+
+function stopProgressUpdates() {
+  if (progressUpdateFrameId) {
+    cancelAnimationFrame(progressUpdateFrameId);
+    progressUpdateFrameId = null;
+  }
+}
+
 function updateStatement(statement) {
   if (!statement) return;
 
@@ -117,6 +188,9 @@ function updateStatement(statement) {
 
   // Reset countdown
   currentCountdown = STATEMENT_DURATION;
+
+  // Update progress bar for new statement
+  updateProgressBar();
 
   console.log("🗣️ New statement:", statement.text, `(ID: ${statement.statementId})`);
 }
@@ -181,6 +255,16 @@ function getActiveStatementFromTime(currentTime) {
   return activeStatement;
 }
 
+function clearStatement() {
+  currentStatement = null;
+  titleEl.textContent = "Statements will load here...";
+  stateEl.textContent = "(awaiting response)";
+  currentResponseLabel = "(awaiting response)";
+  artEl.src = images.unseen;
+  stateEl.className = '';
+  updateProgressBar();
+}
+
 function updateStatementFromSeekTime() {
   const activeStatement = getActiveStatementFromTime(audio.currentTime);
 
@@ -193,6 +277,10 @@ function updateStatementFromSeekTime() {
     currentCountdown = Math.ceil(endTime - audio.currentTime);
 
     console.log(`🎯 Seek detected: Statement ${activeStatement.statementId}, ${currentCountdown}s remaining`);
+  } else if (!activeStatement && currentStatement) {
+    // We're before the first statement, clear the display
+    clearStatement();
+    console.log(`🎯 Before first statement, cleared display`);
   }
 }
 
@@ -237,11 +325,13 @@ async function initialize() {
   audio.addEventListener("play", () => {
     updateStatementFromSeekTime(); // Set statement based on current time
     startCountdown();
+    startProgressUpdates();
   });
 
   // Handle seeking - update statement when user scrubs through audio
   audio.addEventListener("seeked", () => {
     updateStatementFromSeekTime();
+    updateProgressBar();
     console.log(`🔍 Seeked to ${formatTime(audio.currentTime)}`);
   });
 
@@ -261,18 +351,37 @@ initialize();
 audio.addEventListener("play", startSmoothTimeUpdates);
 audio.addEventListener("pause", () => {
   stopSmoothTimeUpdates();
+  stopProgressUpdates();
   updateDebugTime(); // Final update when paused
+  updateProgressBar(); // Final progress update when paused
 });
 audio.addEventListener("seeking", startSmoothTimeUpdates); // Smooth updates while scrubbing
 audio.addEventListener("seeked", () => {
   if (audio.paused) {
     stopSmoothTimeUpdates();
+    stopProgressUpdates();
     updateDebugTime(); // Final update if paused after seek
+    updateProgressBar(); // Final progress update if paused after seek
+  } else {
+    startProgressUpdates(); // Resume progress updates if playing
   }
   // If playing, smooth updates continue automatically
 });
-audio.addEventListener("loadedmetadata", updateDebugTime);
-audio.addEventListener("durationchange", updateDebugTime);
+audio.addEventListener("loadedmetadata", () => {
+  updateDebugTime();
+  updateProgressBar();
+});
+audio.addEventListener("durationchange", () => {
+  updateDebugTime();
+  updateProgressBar();
+});
 
-// Initial debug time update
+// Handle playback rate changes
+audio.addEventListener("ratechange", () => {
+  console.log(`🎵 Playback rate changed to ${audio.playbackRate}x`);
+  updateProgressBar();
+});
+
+// Initial updates
 updateDebugTime();
+updateProgressBar();
