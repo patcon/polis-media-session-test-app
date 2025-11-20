@@ -2,6 +2,10 @@ const audio = document.getElementById("player");
 const titleEl = document.getElementById("title");
 const stateEl = document.getElementById("state");
 const artEl = document.getElementById("art");
+const debugTimeEl = document.getElementById("debug-time");
+
+// Animation frame for smooth time updates
+let timeUpdateFrameId = null;
 
 // Statements to display over time
 const statements = [
@@ -28,6 +32,39 @@ const images = {
 };
 
 // --- Helpers ---
+function formatTime(seconds) {
+  if (isNaN(seconds)) return "0:00.000";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  const ms = Math.floor((seconds % 1) * 1000);
+  return `${mins}:${secs.toString().padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
+}
+
+function updateDebugTime() {
+  const currentTime = audio.currentTime || 0;
+  const duration = audio.duration || 0;
+  debugTimeEl.textContent = `⏱️ ${formatTime(currentTime)} / ${formatTime(duration)}`;
+}
+
+function animateTimeUpdate() {
+  updateDebugTime();
+  timeUpdateFrameId = requestAnimationFrame(animateTimeUpdate);
+}
+
+function startSmoothTimeUpdates() {
+  if (timeUpdateFrameId) {
+    cancelAnimationFrame(timeUpdateFrameId);
+  }
+  animateTimeUpdate();
+}
+
+function stopSmoothTimeUpdates() {
+  if (timeUpdateFrameId) {
+    cancelAnimationFrame(timeUpdateFrameId);
+    timeUpdateFrameId = null;
+  }
+}
+
 function updateMediaSessionCountdown(secondsLeft, label) {
   if ("mediaSession" in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -131,3 +168,23 @@ audio.addEventListener("play", () => {
   updateStatement(currentStatementIndex);
   startCountdown();
 });
+
+// Update debug time display with smooth animation
+audio.addEventListener("play", startSmoothTimeUpdates);
+audio.addEventListener("pause", () => {
+  stopSmoothTimeUpdates();
+  updateDebugTime(); // Final update when paused
+});
+audio.addEventListener("seeking", startSmoothTimeUpdates); // Smooth updates while scrubbing
+audio.addEventListener("seeked", () => {
+  if (audio.paused) {
+    stopSmoothTimeUpdates();
+    updateDebugTime(); // Final update if paused after seek
+  }
+  // If playing, smooth updates continue automatically
+});
+audio.addEventListener("loadedmetadata", updateDebugTime);
+audio.addEventListener("durationchange", updateDebugTime);
+
+// Initial debug time update
+updateDebugTime();

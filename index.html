@@ -92,6 +92,20 @@
       outline-offset: 2px;
     }
 
+    #debug-time {
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem 0 1rem 0;
+      display: inline-block;
+      min-width: 120px;
+      box-shadow: var(--shadow-sm);
+    }
+
     #meta {
       margin-top: 2rem;
     }
@@ -367,6 +381,8 @@
       <!-- You can replace this with your own hosted file -->
       <source src="https://upload.wikimedia.org/wikipedia/commons/4/4e/BWV_543-fugue.ogg" type="audio/ogg">
     </audio>
+
+    <div id="debug-time">⏱️ 0:00 / 0:00</div>
 
     <div id="meta">
       <div id="title">Loading statement...</div>
