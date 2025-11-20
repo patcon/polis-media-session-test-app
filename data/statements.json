@@ -1,0 +1,22 @@
+[
+  {
+    "statementId": 1,
+    "timecode": 0.0,
+    "text": "The city should close downtown streets to cars on weekends."
+  },
+  {
+    "statementId": 2,
+    "timecode": 15.0,
+    "text": "Public funding should prioritize local businesses over big corporations."
+  },
+  {
+    "statementId": 3,
+    "timecode": 30.0,
+    "text": "All public meetings should be recorded and archived online."
+  },
+  {
+    "statementId": 4,
+    "timecode": 45.0,
+    "text": "We should allow citizens to vote directly on annual budget priorities."
+  }
+]

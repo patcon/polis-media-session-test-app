@@ -7,25 +7,36 @@ const debugTimeEl = document.getElementById("debug-time");
 // Animation frame for smooth time updates
 let timeUpdateFrameId = null;
 
-// Statements to display over time
-const statements = [
-  "The city should close downtown streets to cars on weekends.",
-  "Public funding should prioritize local businesses over big corporations.",
-  "All public meetings should be recorded and archived online.",
-  "We should allow citizens to vote directly on annual budget priorities."
-];
-
+// Statements loaded from JSON
+let statements = [];
 let currentStatementIndex = 0;
+let currentStatement = null;
 let inGracePeriod = true;
 let countdownInterval = null;
-let currentCountdown = 15; // track remaining seconds
+let currentCountdown = 8; // track remaining seconds
 let currentResponseLabel = "(awaiting response)"; // track current response
 
-const STATEMENT_DURATION = 15; // seconds
+const STATEMENT_DURATION = 8; // seconds
+
+// Track responses for each statement by statementId
+let statementResponses = {};
+
+// Load statements from JSON file
+async function loadStatements() {
+  try {
+    const response = await fetch('data/statements.json');
+    statements = await response.json();
+    console.log('📄 Loaded statements:', statements);
+  } catch (error) {
+    console.error('❌ Failed to load statements:', error);
+    // Fallback to hardcoded statements
+    statements = [];
+  }
+}
 
 // Image variants
 const images = {
-  unseen: "https://picsum.photos/seed/unseen/512?blur=8",
+  unseen: "assets/waiting.jpeg",
   agree: "assets/i-agree.png",
   disagree: "assets/i-disagree.png",
   pass: "assets/i-pass.jpeg"
@@ -66,25 +77,37 @@ function stopSmoothTimeUpdates() {
 }
 
 function updateMediaSessionCountdown(secondsLeft, label) {
-  if ("mediaSession" in navigator) {
+  if ("mediaSession" in navigator && currentStatement) {
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: statements[currentStatementIndex],
+      title: currentStatement.text,
       artist: `[0:${secondsLeft.toString().padStart(2, "0")}] ${label}`,
       artwork: [{ src: artEl.src, sizes: "512x512", type: "image/jpeg" }]
     });
   }
 }
 
-function updateStatement(i) {
-  const statement = statements[i];
-  titleEl.textContent = statement;
-  stateEl.textContent = "(awaiting response)";
-  currentResponseLabel = "(awaiting response)";
-  inGracePeriod = true;
-  artEl.src = images.unseen;
+function updateStatement(statement) {
+  if (!statement) return;
 
-  // Reset state styling to default
-  stateEl.className = '';
+  currentStatement = statement;
+  titleEl.textContent = statement.text;
+
+  // Check if this statement already has a response
+  const savedResponse = statementResponses[statement.statementId];
+  if (savedResponse) {
+    stateEl.textContent = savedResponse.label;
+    currentResponseLabel = savedResponse.label;
+    artEl.src = savedResponse.art;
+    stateEl.className = '';
+    stateEl.classList.add(savedResponse.type);
+  } else {
+    stateEl.textContent = "(awaiting response)";
+    currentResponseLabel = "(awaiting response)";
+    artEl.src = images.unseen;
+    stateEl.className = '';
+  }
+
+  inGracePeriod = true;
 
   // 1s grace period before votes are accepted
   setTimeout(() => {
@@ -95,11 +118,11 @@ function updateStatement(i) {
   // Reset countdown
   currentCountdown = STATEMENT_DURATION;
 
-  console.log("🗣️ New statement:", statement);
+  console.log("🗣️ New statement:", statement.text, `(ID: ${statement.statementId})`);
 }
 
 function setResponse(type) {
-  if (inGracePeriod) return; // block votes in grace period
+  if (inGracePeriod || !currentStatement) return; // block votes in grace period
 
   let label, art;
   switch (type) {
@@ -117,6 +140,13 @@ function setResponse(type) {
       break;
   }
 
+  // Save response for current statement by statementId
+  statementResponses[currentStatement.statementId] = {
+    type: type,
+    label: label,
+    art: art
+  };
+
   // Save current response
   currentResponseLabel = label;
 
@@ -131,27 +161,64 @@ function setResponse(type) {
     stateEl.classList.remove('updated');
   }, 600);
 
-  console.log("Response updated:", type);
+  console.log("Response updated:", type, `for statement ${currentStatement.statementId}`);
 
   // Update MediaSession with current countdown and latest response
   updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
+}
+
+function getActiveStatementFromTime(currentTime) {
+  // Find the statement that should be active at the current time
+  let activeStatement = null;
+
+  for (let i = statements.length - 1; i >= 0; i--) {
+    if (currentTime >= statements[i].timecode) {
+      activeStatement = statements[i];
+      break;
+    }
+  }
+
+  return activeStatement;
+}
+
+function updateStatementFromSeekTime() {
+  const activeStatement = getActiveStatementFromTime(audio.currentTime);
+
+  if (activeStatement && (!currentStatement || activeStatement.statementId !== currentStatement.statementId)) {
+    updateStatement(activeStatement);
+
+    // Calculate countdown based on time until next statement or end of current statement window
+    const nextStatement = statements.find(s => s.timecode > audio.currentTime);
+    const endTime = nextStatement ? nextStatement.timecode : activeStatement.timecode + STATEMENT_DURATION;
+    currentCountdown = Math.ceil(endTime - audio.currentTime);
+
+    console.log(`🎯 Seek detected: Statement ${activeStatement.statementId}, ${currentCountdown}s remaining`);
+  }
 }
 
 function startCountdown() {
   if (countdownInterval) clearInterval(countdownInterval);
 
   countdownInterval = setInterval(() => {
+    // Update statement based on current audio time instead of just counting down
+    updateStatementFromSeekTime();
+
     updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
     currentCountdown--;
 
-    if (currentCountdown < 0) {
-      // Move to next statement
-      currentStatementIndex = (currentStatementIndex + 1) % statements.length;
-      updateStatement(currentStatementIndex);
+    if (currentCountdown <= 0) {
+      // Recalculate countdown based on current time
+      const activeStatement = getActiveStatementFromTime(audio.currentTime);
+      if (activeStatement) {
+        const nextStatement = statements.find(s => s.timecode > audio.currentTime);
+        const endTime = nextStatement ? nextStatement.timecode : activeStatement.timecode + STATEMENT_DURATION;
+        currentCountdown = Math.ceil(endTime - audio.currentTime);
+      }
     }
   }, 1000);
 
   // Initial update
+  updateStatementFromSeekTime();
   updateMediaSessionCountdown(currentCountdown, currentResponseLabel);
 }
 
@@ -164,10 +231,31 @@ if ("mediaSession" in navigator) {
 }
 
 // --- Initialize ---
-audio.addEventListener("play", () => {
-  updateStatement(currentStatementIndex);
-  startCountdown();
-});
+async function initialize() {
+  await loadStatements();
+
+  audio.addEventListener("play", () => {
+    updateStatementFromSeekTime(); // Set statement based on current time
+    startCountdown();
+  });
+
+  // Handle seeking - update statement when user scrubs through audio
+  audio.addEventListener("seeked", () => {
+    updateStatementFromSeekTime();
+    console.log(`🔍 Seeked to ${formatTime(audio.currentTime)}`);
+  });
+
+  // Handle time updates during playback
+  audio.addEventListener("timeupdate", () => {
+    // Only update if we're not already in a countdown (to avoid conflicts)
+    if (!countdownInterval) {
+      updateStatementFromSeekTime();
+    }
+  });
+}
+
+// Initialize the app
+initialize();
 
 // Update debug time display with smooth animation
 audio.addEventListener("play", startSmoothTimeUpdates);

@@ -385,9 +385,9 @@
     <div id="debug-time">⏱️ 0:00 / 0:00</div>
 
     <div id="meta">
-      <div id="title">Loading statement...</div>
+      <div id="title">Statements will load on play</div>
       <div id="state">(awaiting response)</div>
-      <img id="art" src="https://picsum.photos/seed/unseen/512?blur=8" alt="artwork">
+      <img id="art" src="assets/waiting.jpeg" alt="artwork">
     </div>
   </div>
 
@@ -422,7 +422,7 @@
     // Instructions panel toggle functionality
     const instructionsPanel = document.getElementById('instructions');
     const instructionsToggle = document.getElementById('instructionsToggle');
-    
+
     instructionsToggle.addEventListener('click', () => {
       instructionsPanel.classList.toggle('expanded');
       instructionsToggle.innerHTML = instructionsPanel.classList.contains('expanded')
